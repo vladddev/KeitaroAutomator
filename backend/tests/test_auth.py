@@ -71,3 +71,15 @@ async def test_login_default_missing_returns_503(
     test_settings.keitaro_default_api_key = ""
     resp = await client.post("/api/auth/login", json={})
     assert resp.status_code == 503
+
+
+async def test_header_without_session_cannot_access_local_editor(
+    client: httpx.AsyncClient,
+) -> None:
+    headers = {"X-Keitaro-Api-Key": "arbitrary-unverified-key"}
+
+    streams_resp = await client.get("/api/campaigns/500/streams", headers=headers)
+    assert streams_resp.status_code == 401
+
+    cancel_resp = await client.post("/api/streams/1/cancel", headers=headers)
+    assert cancel_resp.status_code == 401

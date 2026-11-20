@@ -24,12 +24,13 @@ async def require_api_key(
     db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ) -> str:
-    api_key = request.headers.get("X-Keitaro-Api-Key", "").strip()
-    if not api_key:
-        session_id = request.cookies.get(SESSION_COOKIE_NAME)
-        session = await auth_service.get_active_session(db, session_id)
-        if session is not None:
-            api_key = auth_service.resolve_session_api_key(session, settings) or ""
+    session_id = request.cookies.get(SESSION_COOKIE_NAME)
+    session = await auth_service.get_active_session(db, session_id)
+    api_key = (
+        auth_service.resolve_session_api_key(session, settings)
+        if session is not None
+        else None
+    )
 
     if not api_key:
         raise HTTPException(
